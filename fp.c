@@ -83,11 +83,11 @@ int main(int argc , char **argv)
 
     //to_interleave = (int *)malloc(sizeof(int)*2*exchange_size);
     readys = (int *) malloc(sizeof(int) * proc_n);
-    for(int i = 0; i < local_array_size+exchange_size; i++)
+    for(i = 0; i < local_array_size+exchange_size; i++)
     {
         local_array[i] = 0;
     }
-    for(int i = 0; i < proc_n; i++)
+    for(i = 0; i < proc_n; i++)
     {
         readys[i] = 0;
     }
@@ -131,7 +131,7 @@ int main(int argc , char **argv)
         }
         if(my_rank == 0)
             readys[0] = 1;
-        for(int i = 0; i < proc_n;i++)
+        for(i = 0; i < proc_n;i++)
         {
             MPI_Bcast(&readys[i],1,MPI_INT,i,MPI_COMM_WORLD);
         }
@@ -178,7 +178,7 @@ int main(int argc , char **argv)
             }
             #endif
 
-            for(int i = 0; i < exchange_size*2;i++)
+            for(i = 0; i < exchange_size*2;i++)
             {
                 local_array[local_array_size-exchange_size+i] = interleave[i];
             }
