@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include "mpi.h"
 
-#define ARRAY_SIZE 1000
+#define ARRAY_SIZE 1000000
 #define FACTOR 0.1
+//#define DEBUG 1
 //#define DEBUG2 1
 //#define DEBUG3 1
 
@@ -138,13 +139,15 @@ int main(int argc , char **argv)
         pronto = 1;
         
         for (i=0 ; i<proc_n; i++)    
-        {          
+        {
+            #ifdef DEBUG          
             printf(" %d ", readys[i]);
+            #endif 
             if(readys[i] == 0)
                 pronto = 0;
             
         }
-        printf("\n");
+        
 
         if(my_rank != 0)
         {
@@ -202,14 +205,19 @@ int main(int argc , char **argv)
 
         //pronto = 1;
     }
+    #ifdef DEBUG
     printf("\nVetor %d: ",my_rank);
-            for (i=0 ; i<local_array_size; i++)    
-            {          /* print unsorted array */
-                printf("[%03d] ", local_array[i]);
-                printf("\n");
-            }
+        for (i=0 ; i<local_array_size; i++)    
+        {          /* print unsorted array */
+            printf("[%03d] ", local_array[i]);
+            printf("\n");
+        }
+    #endif   
 
+    t2 = MPI_Wtime(); //inicio de medicao
 
+    if(my_rank == 0)
+        printf("\nTempo de execucao: %f\n\n",t2-t1);
     MPI_Finalize();
     return 0;
 }
