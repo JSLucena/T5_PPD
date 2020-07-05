@@ -3,7 +3,7 @@
 #include "mpi.h"
 
 #define ARRAY_SIZE 1000000
-#define FACTOR 0.1
+#define FACTOR 0.1 // % do vetor local, para espaco de tocas
 //#define DEBUG 1
 //#define DEBUG2 1
 //#define DEBUG3 1
@@ -81,12 +81,13 @@ int main(int argc , char **argv)
 
     local_array = (int *)malloc(sizeof(int)*(local_array_size + exchange_size));
 
-    //to_interleave = (int *)malloc(sizeof(int)*2*exchange_size);
     readys = (int *) malloc(sizeof(int) * proc_n);
     for(i = 0; i < local_array_size+exchange_size; i++)
     {
         local_array[i] = 0;
     }
+
+    //inicializacao do vetor de prontos
     for(i = 0; i < proc_n; i++)
     {
         readys[i] = 0;
@@ -112,7 +113,7 @@ int main(int argc , char **argv)
     {
         bs(local_array_size,local_array);
 
-        message = local_array[local_array_size-1];
+        message = local_array[local_array_size-1]; //envia o maior elemento para o processo vizinho testar
         if(my_rank != proc_n-1)
         {
             MPI_Send(&message, 1, MPI_INT, my_rank+1, 0 ,MPI_COMM_WORLD);
@@ -121,8 +122,8 @@ int main(int argc , char **argv)
         {
             MPI_Recv(&message, 1, MPI_INT, my_rank-1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
-            if(message > local_array[0])
-                readys[my_rank] = 0;
+            if(message > local_array[0]) //se o valor recebido for maior que o meu menor elemento
+                readys[my_rank] = 0; //nao estamos ordenados
             else
             {
                 readys[my_rank] = 1;
@@ -130,10 +131,11 @@ int main(int argc , char **argv)
             
         }
         if(my_rank == 0)
-            readys[0] = 1;
+            readys[0] = 1; //primeiro processo sempre ordenado com a esquerda dele
+
         for(i = 0; i < proc_n;i++)
         {
-            MPI_Bcast(&readys[i],1,MPI_INT,i,MPI_COMM_WORLD);
+            MPI_Bcast(&readys[i],1,MPI_INT,i,MPI_COMM_WORLD); //broadcast dos prontos de cada processo
         }
 
         pronto = 1;
@@ -143,15 +145,15 @@ int main(int argc , char **argv)
             #ifdef DEBUG          
             printf(" %d ", readys[i]);
             #endif 
-            if(readys[i] == 0)
-                pronto = 0;
+            if(readys[i] == 0) //se algum deles nao esta pronto
+                pronto = 0; //continuaremos executando
             
         }
         
 
         if(my_rank != 0)
         {
-            MPI_Send(&local_array[0], exchange_size, MPI_INT, my_rank-1, 0 ,MPI_COMM_WORLD);
+            MPI_Send(&local_array[0], exchange_size, MPI_INT, my_rank-1, 0 ,MPI_COMM_WORLD); //envia menores valores para a esquerda
         }
         if(my_rank != proc_n -1)
         {
@@ -165,9 +167,9 @@ int main(int argc , char **argv)
                 printf("\n");
             }
             #endif
-            to_interleave = &local_array[local_array_size-exchange_size];
+            to_interleave = &local_array[local_array_size-exchange_size]; //vetor auxiliar com a parte alta do vetor local
 
-            interleave = interleaving(to_interleave,2*exchange_size);
+            interleave = interleaving(to_interleave,2*exchange_size); //intercala os valores recebidos com a parte alta do vetor
             
             #ifdef DEBUG3
             printf("\nVetor %d: ",my_rank);
@@ -183,7 +185,7 @@ int main(int argc , char **argv)
                 local_array[local_array_size-exchange_size+i] = interleave[i];
             }
 
-            MPI_Send(&local_array[local_array_size], exchange_size, MPI_INT, my_rank+1, 0 ,MPI_COMM_WORLD);
+            MPI_Send(&local_array[local_array_size], exchange_size, MPI_INT, my_rank+1, 0 ,MPI_COMM_WORLD); //manda os valores mais altos depois do interleave de volta
         }
         if(my_rank != 0)
         {
@@ -205,7 +207,7 @@ int main(int argc , char **argv)
 
         //pronto = 1;
     }
-    #ifdef DEBUG
+    #ifdef DEBUG2
     printf("\nVetor %d: ",my_rank);
         for (i=0 ; i<local_array_size; i++)    
         {          /* print unsorted array */
